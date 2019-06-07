@@ -2,28 +2,34 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 int get_x86_operand(struct Operand* operand, char* name)
 {
-    if(strncpy("byte ", name, 5) == 0)
+    operand->exists = true;
+    
+    if(name[strlen(name)-1] == ',')
+        name[strlen(name)-1] = 0;
+
+    if(strncmp("byte ", name, 5) == 0)
     {
         name += 5;
         operand->reg_size = BYTE;
     }
 
-    else if(strncpy("word ", name, 5) == 0)
+    else if(strncmp("word ", name, 5) == 0)
     {
         name += 5;
         operand->reg_size = WORD;
     }
 
-    else if(strncpy("dword ", name, 6) == 0)
+    else if(strncmp("dword ", name, 6) == 0)
     {
         name += 6;
         operand->reg_size = DWORD;
     }
 
-    else if(strncpy("qword ", name, 6) == 0)
+    else if(strncmp("qword ", name, 6) == 0)
     {
         name += 6;
         operand->reg_size = QWORD;
@@ -323,7 +329,7 @@ int get_x86_operand(struct Operand* operand, char* name)
         operand->reg = DIL;
         return 0;
     }
-
+    
     /*
         here we need to check if the string is in hex, binary or decimal format and whether it's positive or negative
     */
@@ -343,95 +349,86 @@ int get_x86_operand(struct Operand* operand, char* name)
             // hexadecimal format
             name += 2;
             
-            if(name[strspn(name, "0123456789abcdefABCDEF")] != 0)
+            if(name[strspn(name, "0123456789abcdef")] != 0)
             {
                 // not valid hex
                 return X86_INVALID_FORMAT;
             }
 
-            long long value = strtoll(name, NULL, 16);
-            operand->reg = NO_X86_REGISTER;
-
+            unsigned long long value = strtoull(name, NULL, 16);
+            operand->uimm64 = value;
             switch(operand->reg_size)
             {
                 case BYTE:
                 {
-                    if((sign && ((value > 127) || (value < -128))) || value > 255)
+                    if((sign && (((signed long long)value > 127) || ((signed long long)value < -128))) || value > 255)
                     {
                         // value overflows 1 BYTE, throw an error
                         return X86_OVERFLOW;
                     }
 
                     operand->type = IMM8;
-                    
-                    if(sign)
-                        operand->imm8 = (signed char) value;
-                    else
-                        operand->uimm8 = (unsigned char) value;
 
                     return 0;
-
-                } break;
+                }
 
                 case WORD:
                 {
-                    if((sign && ((value > 32767) || (value < -32768))) || value > 65535)
+                    if((sign && (((signed long long)value > 32767) || ((signed long long)value < -32768))) || value > 65535)
                     {
                         // value overflows or underflows 1 WORD, throw an error
                         return X86_OVERFLOW;
                     }
 
                     operand->type = IMM16;
-                    
-                    if(sign)
-                        operand->imm16 = (signed short) value;
-                    else
-                        operand->uimm16 = (unsigned short) value;
 
                     return 0;
-                } break;
+                }
 
                 case DWORD:
                 {
-                    if((sign && ((value > 2147483647) || value < -2147483648)) || value > 4294967295)
+                    if((sign && (((signed long long)value > 2147483647) || (signed long long)value < -2147483648)) || value > 4294967295)
                     {
                         // value overflows or underflows 1 WORD, throw an error
                         return X86_OVERFLOW;
                     }
 
                     operand->type = IMM32;
-                    
-                    if(sign)
-                        operand->imm32 = (signed int) value;
-                    else
-                        operand->uimm32 = (unsigned int) value;
 
                     return 0;
-                } break;
+                }
 
                 case QWORD:
                 {
-                    if((sign && ((value > 9223372036854775807LL) || value < -9223372036854775808LL)) || (unsigned long long)value > 18446744073709551615ULL)
-                    {
-                        //value overflows or underflows 1 QWORD, throw an error
-                        return X86_OVERFLOW;
-                    }
-
-                    if(sign)
-                        operand->imm64 = value;
-                    else
-                        operand->uimm64 = (unsigned long long) value;
-
+                    operand->type = IMM64;
                     return 0;
-                } break;
+                }
 
-                default:
+                case SIZE_UNSPECIFIED:
                 {
-                    operand->reg_size = SIZE_UNDEFINED;
-                    operand->imm64 = value;
-                } break;
+                    if(value < 256)
+                    {
+                        operand->reg_size = BYTE;
+                        operand->type = IMM8;
+                    }
+                    else if(value < 65536)
+                    {
+                        operand->reg_size = WORD;
+                        operand->type = IMM16;
+                    }
+                    else if(value < 4294967296)
+                    {
+                        operand->reg_size = DWORD;
+                        operand->type = IMM32;
+                    }
+                    else
+                    {
+                        operand->reg_size = QWORD;
+                        operand->type = IMM64;
+                    }
+                }
             }
-
+            
             return 0;
         }
         else if(name[1] == 'b')
@@ -443,6 +440,7 @@ int get_x86_operand(struct Operand* operand, char* name)
         }
     }
 
-    // decimal format
+    // decimal format or doesnt exist
+    operand->exists = false;
     return 0;
 }

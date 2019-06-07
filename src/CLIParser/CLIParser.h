@@ -30,8 +30,9 @@ enum CLI_ERROR_CODES
     CLI_OUTPUT_SET = -5,
     CLI_INPUT_SET = -6,
     CLI_OUT_OF_MEMORY = -7,
-    CLI_NO_INPUT_OUTPUT_FILE = -8,
-    CLI_PRINT_HELP = -9,
+    CLI_NO_INPUT_FILE = -8,
+    CLI_NO_OUTPUT_FILE = -9,
+    CLI_PRINT_HELP = -10,
 };
 
 struct Argument

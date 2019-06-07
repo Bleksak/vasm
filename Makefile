@@ -1,6 +1,6 @@
 CC := clang-cl
 CXX := clang-cl
-CFLAGS := /Ot /Wall /c /GX -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-unknown-pragmas -Wno-newline-eof -Wno-unused-macros -Wno-empty-translation-unit -Wno-comma -Wno-deprecated-declarations
+CFLAGS := /Ot /Wall /c /GX -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-unknown-pragmas -Wno-newline-eof -Wno-unused-macros -Wno-empty-translation-unit -Wno-comma -Wno-deprecated-declarations -Wno-gnu-binary-literal
 
 SRCDIR := src
 
@@ -20,7 +20,7 @@ OUT := $(subst \,/,$(OUT))
 OUTFILE := vas.exe
 
 all: $(OUT)
-	$(CXX) $(OUT) $(LDFLAGS) -o $(OUTFILE)
+	$(CXX) $(OUT) -o $(OUTFILE)
 
 $(TREE): %:
 		-mkdir $@

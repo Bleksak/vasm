@@ -58,7 +58,7 @@ static int parse_argument(int index, int max_index, const char * restrict argv[]
     arg->type = ARG_VALUE_STRING;
     arg->arg = ARG_INPUT;
     arg->strVal = argv[index];
-
+    
     check->input_file = true;
 
     return 0; // dont skip any
@@ -111,12 +111,12 @@ int parse_cli(int argc, const char* argv[], struct Arguments* restrict arguments
 
     if(!check.input_file)
     {
-        return -(CLI_NO_INPUT_OUTPUT_FILE + 1); // no input file or output file specified
+        return -(CLI_NO_INPUT_FILE + 1); // no input file or output file specified
     }
 
     if(!check.output_file)
     {
-        return -(CLI_NO_INPUT_OUTPUT_FILE + 1);
+        return -(CLI_NO_OUTPUT_FILE + 1);
     }
 
     return 0;

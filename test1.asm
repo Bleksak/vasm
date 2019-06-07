@@ -1,2 +1,2 @@
-aaa
-mov [0], dword 0
+bits 64
+adc rax, rbx

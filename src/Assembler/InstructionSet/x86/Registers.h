@@ -63,15 +63,16 @@ enum OperandType
 
 enum RegisterSize
 {
-    SIZE_UNDEFINED,
     BYTE,
     WORD,
     DWORD,
     QWORD,
+    SIZE_UNSPECIFIED,
 };
 
 struct Operand
 {
+    bool exists;
     enum RegisterSize reg_size;
     enum OperandType type;
     bool deref;
