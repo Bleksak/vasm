@@ -7,6 +7,15 @@
 
 struct EncodedInstruction adc(struct Operand* operand1, struct Operand* operand2, struct Operand* operand3, struct Operand* operand4, bool lock)
 {
+    if (lock)
+    {
+        return (struct EncodedInstruction){
+            .ok = false,
+            .error_message = "Instruction adc can be used with lock prefix only when destination is memory operand",
+        };
+    }
+
+
     if(!operand1->deref)
     {
         if(operand1->type == IMM8 || operand1->type == IMM16 || operand1->type == IMM32 || operand1->type == IMM64)
@@ -15,15 +24,6 @@ struct EncodedInstruction adc(struct Operand* operand1, struct Operand* operand2
             {
                 .ok = false,
                 .error_message = "Instruction adc expects a valid memory operand or a register as first operand.",
-            };
-        }
-
-        if(lock)
-        {
-            return (struct EncodedInstruction)
-            {
-                .ok = false,
-                .error_message = "Instruction adc can be used with lock prefix only when destination is memory operand",
             };
         }
         
@@ -118,6 +118,7 @@ struct EncodedInstruction adc(struct Operand* operand1, struct Operand* operand2
 
         if(operand2->type == REGISTER)
         {
+            printf("operand2 is register?");
             if(operand2->reg_size != operand1->reg_size)
             {
                 return (struct EncodedInstruction)
@@ -149,7 +150,6 @@ struct EncodedInstruction adc(struct Operand* operand1, struct Operand* operand2
 
                 case QWORD:
                 {
-                    // 64 bit is different for some reason
                     return encode_byte_instr(0x11, false, REGISTER_ADDRESSING, operand2->reg, (unsigned char)operand1->reg, true, false);
                 }
 
@@ -157,10 +157,51 @@ struct EncodedInstruction adc(struct Operand* operand1, struct Operand* operand2
             }
 
         }
+
+        switch(operand1->reg_size)
+        {
+            case BYTE:
+            {
+                if(operand2->type != IMM8)
+                {
+                    return (struct EncodedInstruction)
+                    {
+                        .ok = false,
+                        .error_message = "Unmatched operand sizes",
+                    };
+                }
+
+                struct EncodedInstruction instr = encode_byte_instr(0x80, false, REGISTER_ADDRESSING, 2, (unsigned char)operand1->reg, false, false);
+                instr.value[instr.size++] = operand2->uimm8;
+                return instr;
+            }
+
+            case WORD:
+            {
+
+            }
+
+            case DWORD:
+            {
+
+            }
+
+            case QWORD:
+            {
+
+            }
+
+            case SIZE_UNSPECIFIED: {}
+        }
+
         // operand2 is immediate
        
 
     }
+
+    /*
+        deref happens
+    */
 }
 
 #pragma GCC diagnostic pop
