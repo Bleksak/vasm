@@ -5,11 +5,6 @@
 
 int main(int argc, const char* argv[])
 {
-    /*for(int i = 1; i < argc; ++i)
-    {
-        printf("%s\n", argv[i]);
-    }*/
-
     struct Arguments args;
     int error_code = parse_cli(argc, argv, &args);
     if(error_code)

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include "x86.h"
 #include "Registers.h"
 
 enum X86_MOD
@@ -26,4 +27,4 @@ struct EncodedInstruction
     };
 };
 
-__attribute__((const)) struct EncodedInstruction encode_byte_instr(unsigned char opcode, bool direction, enum X86_MOD mod, int reg, unsigned char rm, bool rex, bool size_override);
+__attribute__((const)) struct EncodedInstruction encode_byte_instr(unsigned char opcode, bool direction, enum X86_MOD mod, int reg, int rm, bool rex, bool size_override, unsigned char value[], unsigned char value_size);

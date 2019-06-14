@@ -4,10 +4,78 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "../../Assembler.h"
+
+
+static int setOperandFromValue(unsigned long long value, struct Operand* operand)
+{
+    if(operand->reg_size != SIZE_UNSPECIFIED)
+    {
+        switch(operand->reg_size)
+        {
+            case BYTE:
+            {
+                operand->uimm64 = value & 0xFF;
+                if(value > 255)
+                {
+                    return X86_OVERFLOW;
+                }
+            } break;
+
+            case WORD:
+            {
+                operand->uimm64 = value & 0xFFFF;
+                if(value > 65535)
+                {
+                    return X86_OVERFLOW;
+                }
+            } break;
+
+            case DWORD:
+            {
+                operand->uimm64 = value & 0xFFFFFFFF;
+                if(value > 4294967295)
+                {
+                    return X86_OVERFLOW;
+                }
+            } break;
+
+            case QWORD:
+            {
+                operand->uimm64 = value;
+            } break;
+
+            case SIZE_UNSPECIFIED: {}
+        }
+    }
+
+    operand->uimm64 = value;
+
+    if(value < 256)
+    {
+        operand->type = IMM8;
+    }
+    else if(value < 65536)
+    {
+        operand->type = IMM16;
+    }
+    else if(value < 4294967296)
+    {
+        operand->type = IMM32;
+    }
+    else
+    {
+        operand->type = IMM64;
+    }
+
+    return 0;
+}
+
 int get_x86_operand(struct Operand* operand, char* name)
 {
     operand->exists = true;
-    
+    operand->reg_size = SIZE_UNSPECIFIED;
+
     if(name[strlen(name)-1] == ',')
         name[strlen(name)-1] = 0;
 
@@ -334,12 +402,9 @@ int get_x86_operand(struct Operand* operand, char* name)
         here we need to check if the string is in hex, binary or decimal format and whether it's positive or negative
     */
 
-    bool sign = false;
-
     if(name[0] == '-')
     {
         ++name;
-        sign = true;
     }
 
     if(name[0] == '0')
@@ -349,98 +414,34 @@ int get_x86_operand(struct Operand* operand, char* name)
             // hexadecimal format
             name += 2;
             
-            if(name[strspn(name, "0123456789abcdef")] != 0)
+            if(name[strspn(name, "-0123456789abcdef")] != 0)
             {
                 // not valid hex
                 return X86_INVALID_FORMAT;
             }
 
-            unsigned long long value = strtoull(name, NULL, 16);
-            operand->uimm64 = value;
-            switch(operand->reg_size)
-            {
-                case BYTE:
-                {
-                    if((sign && (((signed long long)value > 127) || ((signed long long)value < -128))) || value > 255)
-                    {
-                        // value overflows 1 BYTE, throw an error
-                        return X86_OVERFLOW;
-                    }
-
-                    operand->type = IMM8;
-
-                    return 0;
-                }
-
-                case WORD:
-                {
-                    if((sign && (((signed long long)value > 32767) || ((signed long long)value < -32768))) || value > 65535)
-                    {
-                        // value overflows or underflows 1 WORD, throw an error
-                        return X86_OVERFLOW;
-                    }
-
-                    operand->type = IMM16;
-
-                    return 0;
-                }
-
-                case DWORD:
-                {
-                    if((sign && (((signed long long)value > 2147483647) || (signed long long)value < -2147483648)) || value > 4294967295)
-                    {
-                        // value overflows or underflows 1 WORD, throw an error
-                        return X86_OVERFLOW;
-                    }
-
-                    operand->type = IMM32;
-
-                    return 0;
-                }
-
-                case QWORD:
-                {
-                    operand->type = IMM64;
-                    return 0;
-                }
-
-                case SIZE_UNSPECIFIED:
-                {
-                    if(value < 256)
-                    {
-                        operand->reg_size = BYTE;
-                        operand->type = IMM8;
-                    }
-                    else if(value < 65536)
-                    {
-                        operand->reg_size = WORD;
-                        operand->type = IMM16;
-                    }
-                    else if(value < 4294967296)
-                    {
-                        operand->reg_size = DWORD;
-                        operand->type = IMM32;
-                    }
-                    else
-                    {
-                        operand->reg_size = QWORD;
-                        operand->type = IMM64;
-                    }
-                }
-            }
-            
-            return 0;
-        }
-        else if(name[1] == 'b')
+            return setOperandFromValue((unsigned long long)strtoll(name, NULL, 16), operand);
+        }    
+        
+        if(name[1] == 'b')
         {
             // binary format
             name += 2;
 
-            return 0;
+            if(name[strspn(name, "-01")] != 0)
+            {
+                // not valid hex
+                return X86_INVALID_FORMAT;
+            }
+            
+            return setOperandFromValue((unsigned long long)strtoll(name, NULL, 2), operand);
         }
     }
 
-    // decimal format or doesnt exist
-    operand->exists = false;
-    return 0;
+    if(name[strspn(name, "-0123456789")] != 0)
+    {
+        return X86_INVALID_OPERAND;
+    }
+
+    return setOperandFromValue((unsigned long long)strtoll(name, NULL, 10), operand);
 }

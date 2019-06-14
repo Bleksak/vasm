@@ -1,2 +1,2 @@
-bits 16
-adc bl, 0x3
+bits 32
+adc eax, strict 0x25

@@ -5,9 +5,9 @@ struct x86_config
 {
     enum BITS
     {
-        BITS16,
-        BITS32,
-        BITS64
+        BITS16 = 1,
+        BITS32 = 2,
+        BITS64 = 3
     } bits;
 };
 
@@ -22,6 +22,12 @@ struct config_keyword
     const char* name;
     unsigned int args;
     struct x86_option (*handle)(struct x86_config* cfg, const char* value);
+};
+
+struct x86_instruction_arguments
+{
+    struct x86_config* config;
+    bool lock;
 };
 
 const struct config_keyword* get_assembler_keyword(const char* name);

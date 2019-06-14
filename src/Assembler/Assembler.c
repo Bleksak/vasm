@@ -39,10 +39,13 @@ struct AssemblerError assemble_file(const char* restrict filename, unsigned char
 
     char line[2048];
 
+    struct x86_instruction_arguments* args = calloc(1, sizeof(struct x86_instruction_arguments));
+    args->config = config;
+
     for(int line_num = 1; fgets(line, 2048, file); ++line_num)
     {
         char instruction_name[32];
-        bool lock = false;
+        args->lock = false;
 
         int offset;
 
@@ -56,11 +59,11 @@ struct AssemblerError assemble_file(const char* restrict filename, unsigned char
             continue; // comment
 
         const char* line_value = (line + offset);
-
+        
         for (char* _str_copy = instruction_name; *_str_copy; ++_str_copy) *_str_copy = (char)tolower(*_str_copy);
         if(strcmp(instruction_name, "lock") == 0)
         {
-            lock = true;
+            args->lock = true;
             if(sscanf_s(line_value, "%s%n", instruction_name, 32, &offset) != 0)
             {
                 // maybe we continue on the next line, ignore for now
@@ -105,7 +108,7 @@ struct AssemblerError assemble_file(const char* restrict filename, unsigned char
             };  // instruction wasnt found, return an error
         }
 
-        if(lock && !instr->supports_lock)
+        if(args->lock && !instr->supports_lock)
         {
             //lock used on instruction that doesnt support it
             return (struct AssemblerError)
@@ -144,10 +147,20 @@ struct AssemblerError assemble_file(const char* restrict filename, unsigned char
             
             line_value = (line_value + offset + 1);
             
-            get_x86_operand(&operands[i], operand);
+            int result;
+
+            if((result = get_x86_operand(&operands[i], operand)) != 0)
+            {
+                return (struct AssemblerError)
+                {
+                    .type = ASSEMBLER_ERROR_ASM,
+                    .code = result,
+                    .line = line_num,
+                };
+            }
         }
 
-        struct EncodedInstruction encoded = instr->parse(&operands[0], &operands[1], &operands[2], &operands[3], lock);
+        struct EncodedInstruction encoded = instr->parse(&operands[0], &operands[1], &operands[2], &operands[3], args);
         if(!encoded.ok)
         {
             return (struct AssemblerError)

@@ -8,6 +8,9 @@ enum ASSEMBLER_ERRORS
     ASSEMBLER_NO_LOCK,
     ASSEMBLER_NOT_ENOUGH_OPERANDS,
     ASSEMBLER_SYNTAX_ERROR,
+    X86_OVERFLOW,
+    X86_INVALID_FORMAT,
+    X86_INVALID_OPERAND,
     ASSEMBLER_INSTRUCTION_ERROR_CUSTOM,
     ASSEMBLER_MACRO_ERROR,
 };
@@ -37,6 +40,9 @@ static inline void get_assembler_error_str(const struct AssemblerError* error, c
         "Instruction does not support LOCK prefix on line %d",
         "Not enough operands supplied for a function on line %d",
         "Unexpected newline on line %d",
+        "Value overflows on line %d",
+        "Invalid hex/binary format on line %d",
+        "Invalid operand on line %d",
     };
 
     if(error->code == ASSEMBLER_INSTRUCTION_ERROR_CUSTOM)

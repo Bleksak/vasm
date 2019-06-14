@@ -53,21 +53,21 @@ enum REGISTER_NUMBERS
 
 enum OperandType
 {
-    REGISTER,
     //[eax] not sure what it's called
-    IMM8,
-    IMM16,
-    IMM32,
-    IMM64
+    IMM8 = 0,
+    IMM16 = 1,
+    IMM32 = 2,
+    IMM64 = 3,
+    REGISTER = 4,
 };
 
 enum RegisterSize
 {
-    BYTE,
-    WORD,
-    DWORD,
-    QWORD,
-    SIZE_UNSPECIFIED,
+    BYTE = 0,
+    WORD = 1,
+    DWORD = 2,
+    QWORD = 3,
+    SIZE_UNSPECIFIED = 4,
 };
 
 struct Operand
@@ -90,13 +90,6 @@ struct Operand
         signed int imm32;
         signed long long imm64;
     };
-};
-
-enum get_x86_operand_errors
-{
-    X86_OK = 0,
-    X86_OVERFLOW,
-    X86_INVALID_FORMAT,
 };
 
 int get_x86_operand(struct Operand* operand, char* name);
